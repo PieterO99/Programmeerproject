@@ -19,6 +19,7 @@ class TreeAgent(Agent):
         self.status = status
         self.tree_type = tree_type
         assert self.status in ["std", "burning", "empty"]
+        print('yeet')
         
         self.steps_left = burn_time_dict[self.tree_type]
 
