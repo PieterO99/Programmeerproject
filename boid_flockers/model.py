@@ -29,8 +29,9 @@ class BoidFlockers(Model):
         vision=10,
         separation=2,
         cohere=0.025,
-        separate=0.25,
+        separate=10,
         match=0.04,
+        approach_destination=0.1
     ):
         """
         Create a new Flockers model.
@@ -49,12 +50,12 @@ class BoidFlockers(Model):
         self.separation = separation
         self.schedule = RandomActivation(self)
         self.space = ContinuousSpace(width, height, True)
-        self.factors = dict(cohere=cohere, separate=separate, match=match)
-        self.doors = [Door((0.3*self.space.x_max, self.space.y_max)), 
-                Door((0.5*self.space.x_max, self.space.y_max)),
-                Door((0.3*self.space.x_max, 0)),
-                Door((0, 0.1*self.space.y_max)),
-                Door((0, 0.7*self.space.y_max))]
+        self.factors = dict(cohere=cohere, separate=separate, match=match, approach_destination=approach_destination)
+        self.doors = [Door(self.population+1, self, (0.3*self.space.x_max, self.space.y_max)), 
+                Door(self.population+2, self, (0.5*self.space.x_max, self.space.y_max)),
+                Door(self.population+3, self,(0.3*self.space.x_max, 0)),
+                Door(self.population+4, self, (0, 0.1*self.space.y_max)),
+                Door(self.population+5, self, (0, 0.7*self.space.y_max))]
         self.make_agents()
         self.running = True
 
@@ -62,7 +63,8 @@ class BoidFlockers(Model):
         """
         Create self.population agents, with random positions and starting headings.
         """
-
+        for door in self.doors:
+            self.schedule.add(door)
         for i in range(self.population):
             doors = random.choices(self.doors, [1]*len(self.doors), k=2)
             pos = doors[0].pos

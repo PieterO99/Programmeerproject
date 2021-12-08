@@ -74,6 +74,7 @@ class Boid(Agent):
     def separate(self, neighbors):
         """
         Return a vector away from any neighbors closer than separation dist.
+        Idee: stoppen als mensen te dichtbij komen, afhankelijk van hoe sigma de agent is.
         """
         me = self.pos
         them = (n.pos for n in neighbors)
