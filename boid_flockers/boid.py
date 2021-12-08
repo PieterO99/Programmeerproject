@@ -21,6 +21,8 @@ class Boid(Agent):
         unique_id,
         model,
         pos,
+        # added destination
+        destination,
         speed,
         velocity,
         vision,
@@ -28,6 +30,8 @@ class Boid(Agent):
         cohere=0.025,
         separate=0.25,
         match=0.04,
+        # added destination
+        approach_destination=0.1
     ):
         """
         Create a new Boid flocker agent.
@@ -44,6 +48,8 @@ class Boid(Agent):
         """
         super().__init__(unique_id, model)
         self.pos = np.array(pos)
+        # added destination
+        self.destination = np.array(destination)
         self.speed = speed
         self.velocity = velocity
         self.vision = vision
@@ -51,6 +57,8 @@ class Boid(Agent):
         self.cohere_factor = cohere
         self.separate_factor = separate
         self.match_factor = match
+        # added destination
+        self.destination_factor = approach_destination
 
     def cohere(self, neighbors):
         """
@@ -86,6 +94,9 @@ class Boid(Agent):
             match_vector /= len(neighbors)
         return match_vector
 
+    def approach_destination(self):
+        return self.destination - self.pos
+
     def step(self):
         """
         Get the Boid's neighbors, compute the new vector, and move accordingly.
@@ -96,6 +107,7 @@ class Boid(Agent):
             self.cohere(neighbors) * self.cohere_factor
             + self.separate(neighbors) * self.separate_factor
             + self.match_heading(neighbors) * self.match_factor
+            + self.approach_destination() * self.destination_factor
         ) / 2
         self.velocity /= np.linalg.norm(self.velocity)
         new_pos = self.pos + self.velocity * self.speed

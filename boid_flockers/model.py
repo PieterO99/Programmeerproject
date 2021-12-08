@@ -6,13 +6,14 @@ Uses numpy arrays to represent vectors.
 """
 
 import numpy as np
+import random
 
 from mesa import Model
 from mesa.space import ContinuousSpace
 from mesa.time import RandomActivation
 
 from .boid import Boid
-
+from .environment import Door
 
 class BoidFlockers(Model):
     """
@@ -49,6 +50,11 @@ class BoidFlockers(Model):
         self.schedule = RandomActivation(self)
         self.space = ContinuousSpace(width, height, True)
         self.factors = dict(cohere=cohere, separate=separate, match=match)
+        self.doors = [Door((0.3*self.space.x_max, self.space.y_max)), 
+                Door((0.5*self.space.x_max, self.space.y_max)),
+                Door((0.3*self.space.x_max, 0)),
+                Door((0, 0.1*self.space.y_max)),
+                Door((0, 0.7*self.space.y_max))]
         self.make_agents()
         self.running = True
 
@@ -56,15 +62,17 @@ class BoidFlockers(Model):
         """
         Create self.population agents, with random positions and starting headings.
         """
+
         for i in range(self.population):
-            x = self.random.random() * self.space.x_max
-            y = self.random.random() * self.space.y_max
-            pos = np.array((x, y))
+            doors = random.choices(self.doors, [1]*len(self.doors), k=2)
+            pos = doors[0].pos
+            destination = doors[1].pos
             velocity = np.random.random(2) * 2 - 1
             boid = Boid(
                 i,
                 self,
                 pos,
+                destination,
                 self.speed,
                 velocity,
                 self.vision,
