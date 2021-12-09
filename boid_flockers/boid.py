@@ -2,6 +2,16 @@ import numpy as np
 
 from mesa import Agent
 
+def bounded(self, pos):
+        """
+        Make sure position is between models bounds.
+        """
+        x,y = pos
+        x = min(x, self.model.space.x_max-0.1)
+        x = max(x, self.model.space.x_min)
+        y = min(y, self.model.space.y_max-0.1)
+        y = max(y, self.model.space.y_min)
+        return np.array([x,y])
 
 class Boid(Agent):
     """
@@ -74,7 +84,8 @@ class Boid(Agent):
     def separate(self, neighbors):
         """
         Return a vector away from any neighbors closer than separation dist.
-        Idee: stoppen als mensen te dichtbij komen, afhankelijk van hoe sigma de agent is.
+        Idee: buren verschillend behandelen afhankelijk van richting (velocity)
+        Idee: vertragen als mensen te dichtbij komen, afhankelijk van hoe sigma de agent is: berekenen vanuit speed, velocity en pos?
         """
         me = self.pos
         them = (n.pos for n in neighbors)
@@ -112,4 +123,7 @@ class Boid(Agent):
         ) / 2
         self.velocity /= np.linalg.norm(self.velocity)
         new_pos = self.pos + self.velocity * self.speed
-        self.model.space.move_agent(self, new_pos)
+        self.model.space.move_agent(self, bounded(self, new_pos))
+        if np.allclose(self.pos, self.destination, atol=1):
+            self.model.space.remove_agent(self)
+            self.model.schedule.remove(self)

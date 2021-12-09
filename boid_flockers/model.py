@@ -22,14 +22,14 @@ class BoidFlockers(Model):
 
     def __init__(
         self,
-        population=100,
+        population=20,
         width=100,
         height=100,
         speed=1,
         vision=10,
-        separation=2,
+        separation=5,
         cohere=0.025,
-        separate=10,
+        separate=0.5,
         match=0.04,
         approach_destination=0.1
     ):
@@ -49,10 +49,10 @@ class BoidFlockers(Model):
         self.speed = speed
         self.separation = separation
         self.schedule = RandomActivation(self)
-        self.space = ContinuousSpace(width, height, True)
+        self.space = ContinuousSpace(width, height, False) 
         self.factors = dict(cohere=cohere, separate=separate, match=match, approach_destination=approach_destination)
-        self.doors = [Door(self.population+1, self, (0.3*self.space.x_max, self.space.y_max)), 
-                Door(self.population+2, self, (0.5*self.space.x_max, self.space.y_max)),
+        self.doors = [Door(self.population+1, self, (0.3*self.space.x_max, self.space.y_max - 0.1)), 
+                Door(self.population+2, self, (0.5*self.space.x_max, self.space.y_max - 0.1)),
                 Door(self.population+3, self,(0.3*self.space.x_max, 0)),
                 Door(self.population+4, self, (0, 0.1*self.space.y_max)),
                 Door(self.population+5, self, (0, 0.7*self.space.y_max))]
