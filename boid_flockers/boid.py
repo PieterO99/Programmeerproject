@@ -1,6 +1,7 @@
 import numpy as np
 
 from mesa import Agent
+from .environment import Obstacle_Block
 
 def bounded(self, pos):
         """
@@ -89,11 +90,30 @@ class Boid(Agent):
         """
         me = self.pos
         them = (n.pos for n in neighbors)
+        obstacles = neighbor_boids = []
+        for neighbor in them:
+            if isinstance(neighbor, Obstacle_Block):
+                obstacles.append(neighbor)
+            elif isinstance(neighbor, Boid):
+                neighbor_boids.append(neighbor)
+        
         separation_vector = np.zeros(2)
-        for other in them:
+
+        # avoid all obstacles within vision, relative to distance
+        for other in obstacles:
+            if self.model.space.get_distance(me, other) < self.vision:
+                v = self.model.space.get_heading(me, other)
+                perp_v = [-1*v[1],v[0]]
+                separation_vector += self.model.space.get_heading(me, other) / self.model.space.get_distance(me, other)
+
+        # separate from neighbors
+        for other in neighbor_boids:
             if self.model.space.get_distance(me, other) < self.separation:
-                separation_vector -= self.model.space.get_heading(me, other)
-        return separation_vector
+                v = self.model.space.get_heading(me, other)
+                perp_v = [-1*v[1],v[0]]
+                separation_vector += perp_v / self.model.space.get_distance(me, other)
+
+        return separation_vector - self.velocity
 
     def match_heading(self, neighbors):
         """
@@ -102,12 +122,14 @@ class Boid(Agent):
         match_vector = np.zeros(2)
         if neighbors:
             for neighbor in neighbors:
-                match_vector += neighbor.velocity
+                match_vector += neighbor.velocity if isinstance(neighbor, Boid) else 0
             match_vector /= len(neighbors)
         return match_vector
 
+
     def approach_destination(self):
         return self.destination - self.pos
+        
 
     def step(self):
         """
@@ -124,6 +146,6 @@ class Boid(Agent):
         self.velocity /= np.linalg.norm(self.velocity)
         new_pos = self.pos + self.velocity * self.speed
         self.model.space.move_agent(self, bounded(self, new_pos))
-        if np.allclose(self.pos, self.destination, atol=1):
+        if np.allclose(self.pos, self.destination, atol=5):
             self.model.space.remove_agent(self)
             self.model.schedule.remove(self)

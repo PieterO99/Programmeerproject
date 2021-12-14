@@ -13,7 +13,7 @@ from mesa.space import ContinuousSpace
 from mesa.time import RandomActivation
 
 from .boid import Boid
-from .environment import Door
+from .environment import (Door, Obstacle_Block)
 
 class BoidFlockers(Model):
     """
@@ -25,11 +25,11 @@ class BoidFlockers(Model):
         population=20,
         width=100,
         height=100,
-        speed=1,
+        speed=0.2,
         vision=10,
-        separation=5,
+        separation=2,
         cohere=0.025,
-        separate=0.5,
+        separate=0.2,
         match=0.04,
         approach_destination=0.1
     ):
@@ -51,11 +51,11 @@ class BoidFlockers(Model):
         self.schedule = RandomActivation(self)
         self.space = ContinuousSpace(width, height, False) 
         self.factors = dict(cohere=cohere, separate=separate, match=match, approach_destination=approach_destination)
-        self.doors = [Door(self.population+1, self, (0.3*self.space.x_max, self.space.y_max - 0.1)), 
-                Door(self.population+2, self, (0.5*self.space.x_max, self.space.y_max - 0.1)),
-                Door(self.population+3, self,(0.3*self.space.x_max, 0)),
-                Door(self.population+4, self, (0, 0.1*self.space.y_max)),
-                Door(self.population+5, self, (0, 0.7*self.space.y_max))]
+        self.doors = [Door(self.population+1, self, (0.3*self.space.x_max, 0), "revolving"), 
+                Door(self.population+2, self, (0.5*self.space.x_max, 0), "revolving"),
+                Door(self.population+3, self,(0.3*self.space.x_max, self.space.y_max - 0.1), "revolving"),
+                Door(self.population+4, self, (0, 0.1*self.space.y_max), "normal"),
+                Door(self.population+5, self, (0, 0.7*self.space.y_max), "normal")]
         self.make_agents()
         self.running = True
 
@@ -63,8 +63,12 @@ class BoidFlockers(Model):
         """
         Create self.population agents, with random positions and starting headings.
         """
+
+        # add doors
         for door in self.doors:
             self.schedule.add(door)
+
+        # add agents
         for i in range(self.population):
             doors = random.choices(self.doors, [1]*len(self.doors), k=2)
             pos = doors[0].pos
@@ -83,6 +87,16 @@ class BoidFlockers(Model):
             )
             self.space.place_agent(boid, pos)
             self.schedule.add(boid)
+
+        # add student helpdesk
+        ID = self.population+7
+        top_left_corner = np.array((self.space.x_max*0.4, self.space.y_max*0.4))
+        for i in range(10):
+            for j in range(5):
+                pos = np.array((i*self.space.x_max / 100, j*self.space.y_max / 100))
+                block = Obstacle_Block(ID+5*i+j, self, top_left_corner + pos)
+                self.schedule.add(block)
+                self.space.place_agent(block, block.pos)
 
     def step(self):
         self.schedule.step()
