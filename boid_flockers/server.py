@@ -18,7 +18,7 @@ def boid_draw(agent):
         # return {"Shape": "rect", "w": 0.01, "h": 0.01, "Filled": "true", "Color": "Green"}
         return {"Shape": "rect", "w": 0.01, "h": 0.01, "Filled": "true", "Color": "Green"}
     else:
-        return {"Shape": "circle", "r": 2, "Filled": "true", "Color": "Blue"}
+        return {"Shape": "circle", "r": 2, "Filled": "true", "Color": agent.closeness}
 
 boid_canvas = SimpleCanvas(boid_draw, 500, 500)
 model_params = {
