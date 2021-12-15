@@ -28,7 +28,6 @@ class BoidFlockers(Model):
         speed=0.2,
         vision=10,
         separation=2,
-        cohere=0.025,
         separate=0.2,
         match=0.04,
         approach_destination=0.1
@@ -50,7 +49,7 @@ class BoidFlockers(Model):
         self.separation = separation
         self.schedule = RandomActivation(self)
         self.space = ContinuousSpace(width, height, False) 
-        self.factors = dict(cohere=cohere, separate=separate, match=match, approach_destination=approach_destination)
+        self.factors = dict(separate=separate, match=match, approach_destination=approach_destination)
         self.doors = [Door(self.population+1, self, (0.3*self.space.x_max, 0), "revolving"), 
                 Door(self.population+2, self, (0.5*self.space.x_max, 0), "revolving"),
                 Door(self.population+3, self,(0.3*self.space.x_max, self.space.y_max - 0.1), "revolving"),
@@ -91,12 +90,35 @@ class BoidFlockers(Model):
         # add student helpdesk
         ID = self.population+7
         top_left_corner = np.array((self.space.x_max*0.4, self.space.y_max*0.4))
-        for i in range(10):
-            for j in range(5):
+        helpdesk_width = 30
+        helpdesk_height = 20
+        for i in range(helpdesk_width):
+            for j in range(helpdesk_height):
                 pos = np.array((i*self.space.x_max / 100, j*self.space.y_max / 100))
-                block = Obstacle_Block(ID+5*i+j, self, top_left_corner + pos)
+                block = Obstacle_Block(ID+helpdesk_height*i+j, self, top_left_corner + pos)
                 self.schedule.add(block)
                 self.space.place_agent(block, block.pos)
+
+        # add walls
+        ID += helpdesk_height *helpdesk_width
+        w = self.space.width
+        h = self.space.height
+        for i in range(w):
+            block1 = Obstacle_Block(ID+i, self, np.array([i,0]))
+            block2 = Obstacle_Block(ID+w+i, self, np.array([i,h-1]))
+            self.schedule.add(block1)
+            self.space.place_agent(block1, block1.pos)
+            self.schedule.add(block2)
+            self.space.place_agent(block2, block2.pos)
+
+        ID += 2*w
+        for i in range(h):
+            block1 = Obstacle_Block(ID+i, self, np.array([0,i]))
+            block2 = Obstacle_Block(ID+h+i, self, np.array([w-1,i]))
+            self.schedule.add(block1)
+            self.space.place_agent(block1, block1.pos)
+            self.schedule.add(block2)
+            self.space.place_agent(block2, block2.pos)
 
     def step(self):
         self.schedule.step()

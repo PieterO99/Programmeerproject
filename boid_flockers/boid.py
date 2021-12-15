@@ -14,6 +14,11 @@ def bounded(self, pos):
         y = max(y, self.model.space.y_min)
         return np.array([x,y])
 
+def difference(a,b):
+    "returns positive number, the closer to zero, the more a and b are similar."
+    cossim = np.dot(a, b)/(np.linalg.norm(a)*np.linalg.norm(b))
+    return abs(1-cossim)
+
 class Boid(Agent):
     """
     A Boid-style flocker agent.
@@ -38,12 +43,10 @@ class Boid(Agent):
         velocity,
         vision,
         separation,
-        closeness="#FFA07A",
-        cohere=0.025,
         separate=0.25,
         match=0.04,
         # added destination
-        approach_destination=0.1
+        approach_destination=0.05
     ):
         """
         Create a new Boid flocker agent.
@@ -62,60 +65,50 @@ class Boid(Agent):
         self.pos = np.array(pos)
         # added destination
         self.destination = np.array(destination)
-        self.closeness = closeness # to check if closeness to neighbors gets calculated correctly
         self.speed = speed
         self.velocity = velocity
         self.vision = vision
         self.separation = separation
-        self.cohere_factor = cohere
         self.separate_factor = separate
         self.match_factor = match
         # added destination
         self.destination_factor = approach_destination
 
-    def cohere(self, neighbors):
-        """
-        Return the vector toward the center of mass of the local neighbors.
-        """
-        cohere = np.zeros(2)
-        if neighbors:
-            for neighbor in neighbors:
-                cohere += self.model.space.get_heading(self.pos, neighbor.pos)
-            cohere /= len(neighbors)
-        return cohere
-
     def separate(self, neighbors):
         """
         Return a vector away from any neighbors closer than separation dist.
-        Idee: buren verschillend behandelen afhankelijk van richting (velocity)
         Idee: vertragen als mensen te dichtbij komen, afhankelijk van hoe sigma de agent is: berekenen vanuit speed, velocity en pos?
         """
         me = self.pos
-        them = (n.pos for n in neighbors)
         obstacles = []
         neighbor_boids = []
         for neighbor in neighbors:
             if isinstance(neighbor, Obstacle_Block):
                 obstacles.append(neighbor)
-                print("blok dichtbij")
             elif isinstance(neighbor, Boid):
                 neighbor_boids.append(neighbor)
-                print("buur dichtbij")
         
         separation_vector = np.zeros(2)
 
         # avoid all obstacles within vision, relative to distance
+        prediction_pos = self.pos + self.speed * self.velocity
+
         for other in obstacles:
-            distance_to_obstacle = self.model.space.get_distance(me, other.pos)
-            if distance_to_obstacle < self.vision:
+            predicted_obstacle_distance = self.model.space.get_distance(prediction_pos, other.pos)
+            # may add tolerable distance to obstacle to use instead of vision
+            if predicted_obstacle_distance < self.vision:
                 v = self.model.space.get_heading(me, other.pos)
-                perp_v = [-1*v[1],v[0]]
-                separation_vector += perp_v / distance_to_obstacle #self.model.space.get_heading(me, other) / self.model.space.get_distance(me, other)
+                # choose perp that's most in line with destination based on cosine similarity
+                pref_perp_v = np.array([-1*v[1],v[0]])
+                destination_v = self.destination-self.pos
+                if difference(pref_perp_v, destination_v) > difference(-pref_perp_v, destination_v):
+                    pref_perp_v *= -1
+
+                separation_vector += pref_perp_v / (predicted_obstacle_distance)
 
         # separate from neighbors
         for other in neighbor_boids:
             # predict if boid and neighbor will come too close
-            prediction_pos = self.pos + self.speed * self.velocity
             prediction_pos_neighbor = other.pos + other.speed * other.velocity
             prediction_separation = self.model.space.get_distance(prediction_pos, prediction_pos_neighbor)
 
@@ -124,8 +117,7 @@ class Boid(Agent):
                 prediction_difference_vector = prediction_pos_neighbor - prediction_pos
                 perp = [-prediction_difference_vector[1], prediction_difference_vector[0]]
                 # divide by square to weigh normalized vector by 1/prediction_separation
-                separation_vector += perp / (prediction_separation**2)
-                self.closeness = "#CD5C5C"
+                separation_vector += perp / (prediction_separation)
                 
         return separation_vector
 
@@ -152,7 +144,6 @@ class Boid(Agent):
 
         neighbors = self.model.space.get_neighbors(self.pos, self.vision, False)
         self.velocity = (
-            self.cohere(neighbors) * self.cohere_factor
             + self.separate(neighbors) * self.separate_factor
             + self.match_heading(neighbors) * self.match_factor
             + self.approach_destination() * self.destination_factor
