@@ -3,6 +3,9 @@
 ### Onderzoeksvraag: 
 ***"Hoe hangt de flow van een gebouw af van de mate waarin mensen afstand willen houden?"***
 
+In mijn project is de flow de tijd (het aantal stappen) waarin alle mensen hun bestemming hebben bereikt.
+De mate waarin mensen afstand willen houden slaat op twee factoren: de afstand die ze aan willen houden (`boid.separation`) en hoe sterk ze dit willen doen (`boid.separate`).
+
 ### Minimal Viable Product:
 Ik heb al een goede basis van een boid klasse met een visualisatie erbij. Zie [Shoutout naar Ewout](https://github.com/projectmesa/mesa/tree/main/examples/boid_flockers).
 Ik wil de volgende elementen implementeren:
