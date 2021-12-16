@@ -3,6 +3,9 @@ import numpy as np
 from mesa import Agent
 from .environment import Obstacle_Block
 
+
+TOLERABLE_DISTANCE_BETWEEN_BOIDS = 0.1
+
 def bounded(self, pos):
         """
         Make sure position is between models bounds.
@@ -16,7 +19,9 @@ def bounded(self, pos):
 
 def difference(a,b):
     "returns positive number, the closer to zero, the more a and b are similar."
-    cossim = np.dot(a, b)/(np.linalg.norm(a)*np.linalg.norm(b))
+    norma = np.linalg.norm(a)
+    normb = np.linalg.norm(b)
+    cossim = np.dot(a, b)/(norma*normb) if (norma != 0 and normb != 0) else 0
     return abs(1-cossim)
 
 class Boid(Agent):
@@ -37,15 +42,14 @@ class Boid(Agent):
         unique_id,
         model,
         pos,
-        # added destination
         destination,
         speed,
         velocity,
         vision,
         separation,
+        collissions=0,
         separate=0.25,
         match=0.04,
-        # added destination
         approach_destination=0.05
     ):
         """
@@ -63,7 +67,7 @@ class Boid(Agent):
         """
         super().__init__(unique_id, model)
         self.pos = np.array(pos)
-        # added destination
+        self.collissions = collissions
         self.destination = np.array(destination)
         self.speed = speed
         self.velocity = velocity
@@ -88,7 +92,8 @@ class Boid(Agent):
             elif isinstance(neighbor, Boid):
                 neighbor_boids.append(neighbor)
         
-        separation_vector = np.zeros(2)
+        obs_separation_vector = np.zeros(2)
+        neighbor_separation_vector = np.zeros(2)
 
         # avoid all obstacles within vision, relative to distance
         prediction_pos = self.pos + self.speed * self.velocity
@@ -104,10 +109,14 @@ class Boid(Agent):
                 if difference(pref_perp_v, destination_v) > difference(-pref_perp_v, destination_v):
                     pref_perp_v *= -1
 
-                separation_vector += pref_perp_v / (predicted_obstacle_distance)
+                obs_separation_vector += pref_perp_v / (predicted_obstacle_distance)**2
 
         # separate from neighbors
         for other in neighbor_boids:
+            # count collissions
+            if self.model.space.get_distance(self.pos, other.pos) < TOLERABLE_DISTANCE_BETWEEN_BOIDS:
+                self.model.collissions += 0.5
+
             # predict if boid and neighbor will come too close
             prediction_pos_neighbor = other.pos + other.speed * other.velocity
             prediction_separation = self.model.space.get_distance(prediction_pos, prediction_pos_neighbor)
@@ -117,9 +126,9 @@ class Boid(Agent):
                 prediction_difference_vector = prediction_pos_neighbor - prediction_pos
                 perp = [-prediction_difference_vector[1], prediction_difference_vector[0]]
                 # divide by square to weigh normalized vector by 1/prediction_separation
-                separation_vector += perp / (prediction_separation)
-                
-        return separation_vector
+                neighbor_separation_vector += perp / (prediction_separation)**2
+        
+        return np.array(obs_separation_vector) + np.array(neighbor_separation_vector)
 
     def match_heading(self, neighbors):
         """
@@ -141,7 +150,6 @@ class Boid(Agent):
         """
         Get the Boid's neighbors, compute the new vector, and move accordingly.
         """
-
         neighbors = self.model.space.get_neighbors(self.pos, self.vision, False)
         self.velocity = (
             + self.separate(neighbors) * self.separate_factor
@@ -154,3 +162,4 @@ class Boid(Agent):
         if np.allclose(self.pos, self.destination, atol=5):
             self.model.space.remove_agent(self)
             self.model.schedule.remove(self)
+            self.model.boids_count -= 1

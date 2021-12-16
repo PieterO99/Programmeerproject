@@ -11,6 +11,7 @@ import random
 from mesa import Model
 from mesa.space import ContinuousSpace
 from mesa.time import RandomActivation
+from mesa.datacollection import DataCollector
 
 from .boid import Boid
 from .environment import (Door, Obstacle_Block)
@@ -23,6 +24,7 @@ class BoidFlockers(Model):
     def __init__(
         self,
         population=20,
+        collissions = 0,
         width=100,
         height=100,
         speed=0.2,
@@ -44,9 +46,11 @@ class BoidFlockers(Model):
             cohere, separate, match: factors for the relative importance of
                     the three drives."""
         self.population = population
+        self.collissions = collissions
         self.vision = vision
         self.speed = speed
         self.separation = separation
+        self.boids_count = 0
         self.schedule = RandomActivation(self)
         self.space = ContinuousSpace(width, height, False) 
         self.factors = dict(separate=separate, match=match, approach_destination=approach_destination)
@@ -57,6 +61,7 @@ class BoidFlockers(Model):
                 Door(self.population+5, self, (0, 0.7*self.space.y_max), "normal")]
         self.make_agents()
         self.running = True
+        #self.datacollector
 
     def make_agents(self):
         """
@@ -86,6 +91,7 @@ class BoidFlockers(Model):
             )
             self.space.place_agent(boid, pos)
             self.schedule.add(boid)
+            self.boids_count += 1
 
         # add student helpdesk
         ID = self.population+7
@@ -120,5 +126,12 @@ class BoidFlockers(Model):
             self.schedule.add(block2)
             self.space.place_agent(block2, block2.pos)
 
+        # collect data
+        self.datacollector = DataCollector(
+            model_reporters={"Collisions": "collissions"})
+
     def step(self):
+        self.datacollector.collect(self)
         self.schedule.step()
+        if self.boids_count == 0:
+            self.running = False

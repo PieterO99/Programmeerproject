@@ -1,4 +1,5 @@
 from mesa.visualization.ModularVisualization import ModularServer
+from mesa.visualization.modules import ChartModule
 
 from .model import BoidFlockers
 from .SimpleContinuousModule import SimpleCanvas
@@ -30,4 +31,6 @@ model_params = {
     "separation": 5,
 }
 
-server = ModularServer(BoidFlockers, [boid_canvas], "Boids", model_params)
+chart_element = ChartModule([{"Label": "Collisions", "Color": "Black"}])
+
+server = ModularServer(BoidFlockers, [boid_canvas, chart_element], "Boids", model_params)
