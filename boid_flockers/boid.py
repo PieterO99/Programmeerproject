@@ -50,8 +50,6 @@ class Boid(Agent):
         collissions=0,
         separate_factor=0.25,
         distance_factor=1,
-        # match is inherited from boid model, but seems to be obsolete/irrelevant here
-        match=0,
         approach_destination=0.05
     ):
         """
