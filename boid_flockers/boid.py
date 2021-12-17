@@ -69,7 +69,7 @@ class Boid(Agent):
         super().__init__(unique_id, model)
         self.pos = np.array(pos)
         self.collissions = collissions
-        self.destination = np.array(destination)
+        self.destination = destination
         self.speed = speed
         self.velocity = velocity
         self.vision = vision
@@ -81,7 +81,6 @@ class Boid(Agent):
     def avoid(self, neighbors):
         """
         Return a vector away from any neighbors closer than separation dist.
-        Idee: vertragen als mensen te dichtbij komen, afhankelijk van hoe sigma de agent is: berekenen vanuit speed, velocity en pos?
         """
         me = self.pos
         obstacles = []
@@ -105,7 +104,7 @@ class Boid(Agent):
                 v = self.model.space.get_heading(me, other.pos)
                 # choose perp that's most in line with destination based on cosine similarity
                 pref_perp_v = np.array([-1*v[1],v[0]])
-                destination_v = self.destination-self.pos
+                destination_v = self.destination.pos-self.pos
                 if difference(pref_perp_v, destination_v) > difference(-pref_perp_v, destination_v):
                     pref_perp_v *= -1
 
@@ -133,7 +132,7 @@ class Boid(Agent):
 
 
     def approach_destination(self):
-        return self.destination - self.pos
+        return np.array(self.destination.pos) - self.pos
         
 
     def step(self):
@@ -148,7 +147,7 @@ class Boid(Agent):
         self.velocity = (self.velocity / np.linalg.norm(self.velocity) if (self.velocity).all() != 0 else 0)
         new_pos = self.pos + self.velocity * self.speed
         self.model.space.move_agent(self, bounded(self, new_pos))
-        if np.allclose(self.pos, self.destination, atol=5):
+        if np.allclose(self.pos, self.destination.pos, atol=5):
             self.model.space.remove_agent(self)
             self.model.schedule.remove(self)
             self.model.boids_count -= 1

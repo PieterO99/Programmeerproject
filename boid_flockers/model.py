@@ -12,6 +12,7 @@ from mesa import Model
 from mesa.space import ContinuousSpace
 from mesa.time import RandomActivation
 from mesa.datacollection import DataCollector
+from scipy.stats import truncnorm
 
 from .boid import Boid
 from .environment import (Door, Obstacle_Block)
@@ -54,11 +55,11 @@ class BoidFlockers(Model):
         self.schedule = RandomActivation(self)
         self.space = ContinuousSpace(width, height, False) 
         self.factors = dict(separate_factor=separate_factor, distance_factor=distance_factor, approach_destination=approach_destination)
-        self.doors = [Door(self.population+1, self, (0.3*self.space.x_max, 0), "revolving"), 
-                Door(self.population+2, self, (0.5*self.space.x_max, 0), "revolving"),
-                Door(self.population+3, self,(0.3*self.space.x_max, self.space.y_max - 0.1), "revolving"),
-                Door(self.population+4, self, (0, 0.1*self.space.y_max), "normal"),
-                Door(self.population+5, self, (0, 0.7*self.space.y_max), "normal")]
+        self.doors = [Door("door_a", self, (0.3*self.space.x_max, 0), "revolving"), 
+                Door("door_b", self, (0.5*self.space.x_max, 0), "revolving"),
+                Door("door_c", self,(0.3*self.space.x_max, self.space.y_max - 0.1), "revolving"),
+                Door("door_d", self, (0, 0.1*self.space.y_max), "normal"),
+                Door("door_e", self, (0, 0.7*self.space.y_max), "normal")]
         self.make_agents()
         self.running = True
 
@@ -75,14 +76,15 @@ class BoidFlockers(Model):
         for i in range(self.population):
             doors = random.choices(self.doors, [1]*len(self.doors), k=2)
             pos = doors[0].pos
-            destination = doors[1].pos
+            destination = doors[1]
             velocity = np.random.random(2) * 2 - 1
             boid = Boid(
                 i,
                 self,
                 pos,
                 destination,
-                self.speed,
+                # make agents have a speed between .5 and 1.5 distributed 'normally'
+                truncnorm.rvs(0.5, 1.5, size=1),
                 velocity,
                 self.vision,
                 self.separation,
@@ -105,7 +107,7 @@ class BoidFlockers(Model):
                 self.space.place_agent(block, block.pos)
 
         # add walls
-        ID += helpdesk_height *helpdesk_width
+        ID += helpdesk_height * helpdesk_width
         w = self.space.width
         h = self.space.height
         for i in range(w):

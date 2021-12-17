@@ -17,14 +17,23 @@ def boid_draw(agent):
             return {"Shape": "rect", "w": 0.1, "h": 0.1, "Filled": "true", "Color": "Black"}
     elif isinstance(agent, Obstacle_Block):
         return {"Shape": "rect", "w": 0.05, "h": 0.05, "Filled": "true", "Color": "Grey"}
-    elif agent.destination[0] == 0:
-        return {"Shape": "rect", "w": 0.01, "h": 0.01, "Filled": "true", "Color": " #a93226"}
     else:
-        return {"Shape": "circle", "r": 2, "Filled": "true", "Color": "#f1c40f"}
+        color = "Black"
+        if agent.destination.unique_id == "door_a": 
+            color = "#f1c40f"
+        elif agent.destination.unique_id == "door_b": 
+            color = "#d68910"
+        elif agent.destination.unique_id == "door_c": 
+            color = "#935116"
+        elif agent.destination.unique_id == "door_d": 
+            color = "#f1948a"
+        elif agent.destination.unique_id == "door_e": 
+            color = "#78281f"
+        return {"Shape": "circle", "r": 2, "Filled": "true", "Color": color}
 
 boid_canvas = SimpleCanvas(boid_draw, 500, 500)
 model_params = {
-    "population": 100,
+    "population": 50,
     "width": 100,
     "height": 100,
     "speed": 1,
