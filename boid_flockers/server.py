@@ -1,5 +1,6 @@
 from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.modules import ChartModule
+from mesa.visualization.UserParam import UserSettableParameter
 
 from .model import BoidFlockers
 from .SimpleContinuousModule import SimpleCanvas
@@ -28,7 +29,15 @@ model_params = {
     "height": 100,
     "speed": 1,
     "vision": 30,
-    "separation": 5,
+    "separation": UserSettableParameter(
+        "slider", "Distance to maintain", 1.5, 0.5, 10, 0.5
+    ),
+    "separate_factor": UserSettableParameter(
+        "slider", "Avoidance factor", 0.2, 0, 2, 0.1
+    ),
+    "distance_factor": UserSettableParameter(
+        "slider", "Distance factor", 1.0, 0.0, 3.0, 0.1
+    )
 }
 
 chart_element = ChartModule([{"Label": "Collisions", "Color": "Black"}])

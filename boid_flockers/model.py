@@ -30,7 +30,8 @@ class BoidFlockers(Model):
         speed=0.2,
         vision=10,
         separation=2,
-        separate=0.2,
+        separate_factor=0.2,
+        distance_factor=1,
         match=0.04,
         approach_destination=0.1
     ):
@@ -53,7 +54,7 @@ class BoidFlockers(Model):
         self.boids_count = 0
         self.schedule = RandomActivation(self)
         self.space = ContinuousSpace(width, height, False) 
-        self.factors = dict(separate=separate, match=match, approach_destination=approach_destination)
+        self.factors = dict(separate_factor=separate_factor, distance_factor=distance_factor, match=match, approach_destination=approach_destination)
         self.doors = [Door(self.population+1, self, (0.3*self.space.x_max, 0), "revolving"), 
                 Door(self.population+2, self, (0.5*self.space.x_max, 0), "revolving"),
                 Door(self.population+3, self,(0.3*self.space.x_max, self.space.y_max - 0.1), "revolving"),
@@ -61,7 +62,6 @@ class BoidFlockers(Model):
                 Door(self.population+5, self, (0, 0.7*self.space.y_max), "normal")]
         self.make_agents()
         self.running = True
-        #self.datacollector
 
     def make_agents(self):
         """
@@ -92,6 +92,8 @@ class BoidFlockers(Model):
             self.space.place_agent(boid, pos)
             self.schedule.add(boid)
             self.boids_count += 1
+
+            print([boid.distance_factor, boid.separate_factor])
 
         # add student helpdesk
         ID = self.population+7

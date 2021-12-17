@@ -48,7 +48,8 @@ class Boid(Agent):
         vision,
         separation,
         collissions=0,
-        separate=0.25,
+        separate_factor=0.25,
+        distance_factor=1,
         match=0.04,
         approach_destination=0.05
     ):
@@ -63,6 +64,7 @@ class Boid(Agent):
             separation: Minimum distance to maintain from other Boids.
             cohere: the relative importance of matching neighbors' positions
             separate: the relative importance of avoiding close neighbors
+            distance_factor: power by which we weigh the closeness of neighbors to avoid
             match: the relative importance of matching neighbors' headings
         """
         super().__init__(unique_id, model)
@@ -73,12 +75,12 @@ class Boid(Agent):
         self.velocity = velocity
         self.vision = vision
         self.separation = separation
-        self.separate_factor = separate
+        self.separate_factor = separate_factor
+        self.distance_factor = distance_factor
         self.match_factor = match
-        # added destination
         self.destination_factor = approach_destination
 
-    def separate(self, neighbors):
+    def avoid(self, neighbors):
         """
         Return a vector away from any neighbors closer than separation dist.
         Idee: vertragen als mensen te dichtbij komen, afhankelijk van hoe sigma de agent is: berekenen vanuit speed, velocity en pos?
@@ -124,9 +126,10 @@ class Boid(Agent):
             # if so, go in opposite direction of predicted difference vector, also weigh by predicted distance
             if prediction_separation < self.separation:
                 prediction_difference_vector = prediction_pos_neighbor - prediction_pos
-                perp = [-prediction_difference_vector[1], prediction_difference_vector[0]]
-                # divide by square to weigh normalized vector by 1/prediction_separation
-                neighbor_separation_vector += perp / (prediction_separation)**2
+                # make people avoid each other counter-clockwise
+                perp = [prediction_difference_vector[1], -prediction_difference_vector[0]]
+                # divide by distance_factor+1 to weigh normalized vector by 1/prediction_separation^(distance_factor)
+                neighbor_separation_vector += perp / (prediction_separation)**(self.distance_factor+1)
         
         return np.array(obs_separation_vector) + np.array(neighbor_separation_vector)
 
@@ -152,7 +155,7 @@ class Boid(Agent):
         """
         neighbors = self.model.space.get_neighbors(self.pos, self.vision, False)
         self.velocity = (
-            + self.separate(neighbors) * self.separate_factor
+            + self.avoid(neighbors) * self.separate_factor
             + self.match_heading(neighbors) * self.match_factor
             + self.approach_destination() * self.destination_factor
         ) / 2
