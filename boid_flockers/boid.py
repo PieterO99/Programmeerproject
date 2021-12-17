@@ -50,7 +50,8 @@ class Boid(Agent):
         collissions=0,
         separate_factor=0.25,
         distance_factor=1,
-        match=0.04,
+        # match is inherited from boid model, but seems to be obsolete/irrelevant here
+        match=0,
         approach_destination=0.05
     ):
         """
@@ -77,7 +78,6 @@ class Boid(Agent):
         self.separation = separation
         self.separate_factor = separate_factor
         self.distance_factor = distance_factor
-        self.match_factor = match
         self.destination_factor = approach_destination
 
     def avoid(self, neighbors):
@@ -133,17 +133,6 @@ class Boid(Agent):
         
         return np.array(obs_separation_vector) + np.array(neighbor_separation_vector)
 
-    def match_heading(self, neighbors):
-        """
-        Return a vector of the neighbors' average heading.
-        """
-        match_vector = np.zeros(2)
-        if neighbors:
-            for neighbor in neighbors:
-                match_vector += neighbor.velocity if isinstance(neighbor, Boid) else 0
-            match_vector /= len(neighbors)
-        return match_vector
-
 
     def approach_destination(self):
         return self.destination - self.pos
@@ -156,7 +145,6 @@ class Boid(Agent):
         neighbors = self.model.space.get_neighbors(self.pos, self.vision, False)
         self.velocity = (
             + self.avoid(neighbors) * self.separate_factor
-            + self.match_heading(neighbors) * self.match_factor
             + self.approach_destination() * self.destination_factor
         ) / 2
         self.velocity = (self.velocity / np.linalg.norm(self.velocity) if (self.velocity).all() != 0 else 0)
