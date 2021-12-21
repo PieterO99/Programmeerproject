@@ -6,33 +6,37 @@ from .environment import Obstacle_Block
 
 TOLERABLE_DISTANCE_BETWEEN_BOIDS = 0.1
 
-def bounded(self, pos):
-        """
-        Make sure position is between models bounds.
-        """
-        x,y = pos
-        x = min(x, self.model.space.x_max-0.1)
-        x = max(x, self.model.space.x_min)
-        y = min(y, self.model.space.y_max-0.1)
-        y = max(y, self.model.space.y_min)
-        return np.array([x,y])
 
-def difference(a,b):
-    "returns positive number, the closer to zero, the more a and b are similar."
+def bounded(self, pos):
+    """
+    Force position 'pos' to be between models bounds.
+    """
+    x, y = pos
+    x = min(x, self.model.space.x_max - 0.1)
+    x = max(x, self.model.space.x_min)
+    y = min(y, self.model.space.y_max - 0.1)
+    y = max(y, self.model.space.y_min)
+    return np.array([x, y])
+
+
+def difference(a, b):
+    """
+    returns positive number, the closer to zero, the more a and b are similar.
+    """
     norma = np.linalg.norm(a)
     normb = np.linalg.norm(b)
-    cossim = np.dot(a, b)/(norma*normb) if (norma != 0 and normb != 0) else 0
-    return abs(1-cossim)
+    cossim = np.dot(a, b) / (norma * normb) if (norma != 0 and normb != 0) else 0
+    return abs(1 - cossim)
+
 
 class Boid(Agent):
     """
-    A Boid-style flocker agent.
-    The agent follows three behaviors to flock:
-        - Cohesion: steering towards neighboring agents.
-        - Separation: avoiding getting too close to any other agent.
-        - Alignment: try to fly in the same direction as the neighbors.
+    A moving agent with a destination, inspired by the boid-model.
+    The agent follows two behaviors to move:
+        - Avoidance: avoiding neighbors and obstacles.
+        - Moving to destination: steering to destination.
     Boids have a vision that defines the radius in which they look for their
-    neighbors to flock with. Their speed (a scalar) and velocity (a vector)
+    neighbors and obstacles. Their speed (a scalar) and velocity (a vector)
     define their movement. Separation is their desired minimum distance from
     any other Boid.
     """
@@ -48,23 +52,23 @@ class Boid(Agent):
         vision,
         separation,
         collissions=0,
+        steps_until_dest=0,
         separate_factor=0.25,
         distance_factor=1,
         approach_destination=0.05
     ):
         """
-        Create a new Boid flocker agent.
+        Create a new Boid agent.
         Args:
             unique_id: Unique agent identifyer.
             pos: Starting position
             speed: Distance to move per step.
-            heading: numpy vector for the Boid's direction of movement.
-            vision: Radius to look around for nearby Boids.
+            velocity: numpy vector for the Boid's direction of movement.
+            vision: Radius to look around for nearby Boids and obstacles.
             separation: Minimum distance to maintain from other Boids.
-            cohere: the relative importance of matching neighbors' positions
-            separate: the relative importance of avoiding close neighbors
-            distance_factor: power by which we weigh the closeness of neighbors to avoid
-            match: the relative importance of matching neighbors' headings
+            separate_factor: the relative importance of avoiding close neighbors
+            distance_factor: power by which we weigh the closeness of neighbors to avoid them
+            destination_factor: the relative importance of steering towards destination
         """
         super().__init__(unique_id, model)
         self.pos = np.array(pos)
@@ -74,13 +78,14 @@ class Boid(Agent):
         self.velocity = velocity
         self.vision = vision
         self.separation = separation
+        self.steps_until_dest = steps_until_dest
         self.separate_factor = separate_factor
         self.distance_factor = distance_factor
         self.destination_factor = approach_destination
 
     def avoid(self, neighbors):
         """
-        Return a vector away from any neighbors closer than separation dist.
+        Return a vector away from any neighbors or obstacles closer than separation distance.
         """
         me = self.pos
         obstacles = []
@@ -90,7 +95,7 @@ class Boid(Agent):
                 obstacles.append(neighbor)
             elif isinstance(neighbor, Boid):
                 neighbor_boids.append(neighbor)
-        
+
         obs_separation_vector = np.zeros(2)
         neighbor_separation_vector = np.zeros(2)
 
@@ -103,8 +108,8 @@ class Boid(Agent):
             if predicted_obstacle_distance < self.vision:
                 v = self.model.space.get_heading(me, other.pos)
                 # choose perp that's most in line with destination based on cosine similarity
-                pref_perp_v = np.array([-1*v[1],v[0]])
-                destination_v = self.destination.pos-self.pos
+                pref_perp_v = np.array([-1 * v[1], v[0]])
+                destination_v = self.destination.pos - self.pos
                 if difference(pref_perp_v, destination_v) > difference(-pref_perp_v, destination_v):
                     pref_perp_v *= -1
 
@@ -126,14 +131,12 @@ class Boid(Agent):
                 # make people avoid each other counter-clockwise
                 perp = [prediction_difference_vector[1], -prediction_difference_vector[0]]
                 # divide by distance_factor+1 to weigh normalized vector by 1/prediction_separation^(distance_factor)
-                neighbor_separation_vector += perp / (prediction_separation)**(self.distance_factor+1)
-        
-        return np.array(obs_separation_vector) + np.array(neighbor_separation_vector)
+                neighbor_separation_vector += perp / (prediction_separation)**(self.distance_factor + 1)
 
+        return np.array(obs_separation_vector) + np.array(neighbor_separation_vector)
 
     def approach_destination(self):
         return np.array(self.destination.pos) - self.pos
-        
 
     def step(self):
         """
@@ -147,7 +150,10 @@ class Boid(Agent):
         self.velocity = (self.velocity / np.linalg.norm(self.velocity) if (self.velocity).all() != 0 else 0)
         new_pos = self.pos + self.velocity * self.speed
         self.model.space.move_agent(self, bounded(self, new_pos))
+        self.steps_until_dest += 1
+
         if np.allclose(self.pos, self.destination.pos, atol=5):
+            self.model.flow += (self.steps_until_dest / self.speed[0]) / self.model.population
             self.model.space.remove_agent(self)
             self.model.schedule.remove(self)
             self.model.boids_count -= 1

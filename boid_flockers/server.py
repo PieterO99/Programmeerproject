@@ -6,7 +6,7 @@ from .model import BoidFlockers
 from .SimpleContinuousModule import SimpleCanvas
 
 from .environment import Door, Obstacle_Block
-from .boid import Boid
+
 
 def boid_draw(agent):
 
@@ -19,17 +19,18 @@ def boid_draw(agent):
         return {"Shape": "rect", "w": 0.05, "h": 0.05, "Filled": "true", "Color": "Grey"}
     else:
         color = "Black"
-        if agent.destination.unique_id == "door_a": 
+        if agent.destination.unique_id == "door_a":
             color = "#f1c40f"
-        elif agent.destination.unique_id == "door_b": 
+        elif agent.destination.unique_id == "door_b":
             color = "#d68910"
-        elif agent.destination.unique_id == "door_c": 
+        elif agent.destination.unique_id == "door_c":
             color = "#935116"
-        elif agent.destination.unique_id == "door_d": 
+        elif agent.destination.unique_id == "door_d":
             color = "#f1948a"
-        elif agent.destination.unique_id == "door_e": 
+        elif agent.destination.unique_id == "door_e":
             color = "#78281f"
         return {"Shape": "circle", "r": 2, "Filled": "true", "Color": color}
+
 
 boid_canvas = SimpleCanvas(boid_draw, 500, 500)
 model_params = {
