@@ -18,3 +18,4 @@ De mate waarin mensen afstand willen houden slaat op drie factoren: de afstand d
 
 ![studentenstroom in de hal](doc/SkriensjotABM.png)
 
+# **Public Domain Release**
