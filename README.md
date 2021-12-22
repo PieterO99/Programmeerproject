@@ -18,6 +18,9 @@ De mate waarin mensen afstand willen houden slaat op drie factoren: de afstand d
 
 ![studentenstroom in de hal](doc/SkriensjotABM.png)
 
+
+# [screencasting](https://video.uva.nl/media/video1827382427/0_zclgkj0z)
+
 __License: *Public Domain Release*__
 
 [^1]: simple_continuous_canvas.js, SimplecontinuousModule.py en run.py zijn letterlijk overgenomen. De bestanden model.py, server.py en boid.py heb ik als template gebruikt, maar behoorlijk aangepast.
