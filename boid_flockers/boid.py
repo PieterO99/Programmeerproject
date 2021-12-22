@@ -21,7 +21,7 @@ def bounded(self, pos):
 
 def difference(a, b):
     """
-    returns positive number, the closer to zero, the more a and b are similar.
+    Returns positive number, the closer to zero, the more a and b are similar.
     """
     norma = np.linalg.norm(a)
     normb = np.linalg.norm(b)
@@ -96,7 +96,9 @@ class Boid(Agent):
             elif isinstance(neighbor, Boid):
                 neighbor_boids.append(neighbor)
 
+        # vector to avoid obstacles
         obs_separation_vector = np.zeros(2)
+        # vector to avoid neighbors
         neighbor_separation_vector = np.zeros(2)
 
         # avoid all obstacles within vision, relative to distance
@@ -104,7 +106,6 @@ class Boid(Agent):
 
         for other in obstacles:
             predicted_obstacle_distance = self.model.space.get_distance(prediction_pos, other.pos)
-            # may add tolerable distance to obstacle to use instead of vision
             if predicted_obstacle_distance < self.vision:
                 v = self.model.space.get_heading(me, other.pos)
                 # choose perp that's most in line with destination based on cosine similarity
@@ -136,6 +137,9 @@ class Boid(Agent):
         return np.array(obs_separation_vector) + np.array(neighbor_separation_vector)
 
     def approach_destination(self):
+        """
+        Get a vector pointing to the boids destination.
+        """
         return np.array(self.destination.pos) - self.pos
 
     def step(self):
@@ -143,6 +147,7 @@ class Boid(Agent):
         Get the Boid's neighbors, compute the new vector, and move accordingly.
         """
         neighbors = self.model.space.get_neighbors(self.pos, self.vision, False)
+        # weigh avoidance vector and vector pointing to destination to get a general direction
         self.velocity = (
             + self.avoid(neighbors) * self.separate_factor
             + self.approach_destination() * self.destination_factor
@@ -152,6 +157,7 @@ class Boid(Agent):
         self.model.space.move_agent(self, bounded(self, new_pos))
         self.steps_until_dest += 1
 
+        # remove agent from model if close enough to destination
         if np.allclose(self.pos, self.destination.pos, atol=5):
             self.model.flow += (self.steps_until_dest / self.speed[0]) / self.model.population
             self.model.space.remove_agent(self)
