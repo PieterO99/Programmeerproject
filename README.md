@@ -2,7 +2,7 @@
 
 ##### Model: studenten die door de hal van het sciencepark lopen
 
-Dit model bestaat uit een boid agent die een lopende student modelleert. De agent heeft een positie `boid.pos`, constante snelheid `boid.speed` en een richting `boid.velocity`, die hij elke stap update. De agent verplaatst zich hiermee elke stap van het model.
+Dit model bestaat uit een boid agent die een lopende student modelleert. De agent heeft een positie `boid.pos`, constante snelheid `boid.speed` en een richting `boid.velocity`, die hij elke stap update. De agent verplaatst zich hiermee elke stap van het model. Voor de visualiatie heb ik [dit template](https://github.com/projectmesa/mesa/tree/main/examples/boid_flockers) van EwoutH gebruikt.
 
 De richting van de agent wordt bepaald door twee factoren: 
 - het ontwijken van andere boids en obstakels (`avoid()`)
