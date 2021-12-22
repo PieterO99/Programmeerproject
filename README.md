@@ -2,7 +2,7 @@
 
 ##### Model: studenten die door de hal van het sciencepark lopen
 
-Dit model bestaat uit een boid agent die een lopende student modelleert. De agent heeft een positie `boid.pos`, constante snelheid `boid.speed` en een richting `boid.velocity`, die hij elke stap update. De agent verplaatst zich hiermee elke stap van het model. Voor de visualiatie heb ik [dit template](https://github.com/projectmesa/mesa/tree/main/examples/boid_flockers) van EwoutH gebruikt.
+Dit model bestaat uit een boid agent die een lopende student modelleert. De agent heeft een positie `boid.pos`, constante snelheid `boid.speed` en een richting `boid.velocity`, die hij elke stap update. De agent verplaatst zich hiermee elke stap van het model. Voor de visualiatie heb ik [dit template](https://github.com/projectmesa/mesa/tree/main/examples/boid_flockers) van EwoutH gebruikt. [^1]
 
 De richting van de agent wordt bepaald door twee factoren: 
 - het ontwijken van andere boids en obstakels (`avoid()`)
@@ -19,3 +19,5 @@ De mate waarin mensen afstand willen houden slaat op drie factoren: de afstand d
 ![studentenstroom in de hal](doc/SkriensjotABM.png)
 
 __License: *Public Domain Release*__
+
+[^1]: simple_continuous_canvas.js, SimplecontinuousModule.py en run.py zijn letterlijk overgenomen. De bestanden model.py, server.py en boid.py heb ik als template gebruikt, maar behoorlijk aangepast.
