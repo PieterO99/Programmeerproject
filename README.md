@@ -8,5 +8,5 @@ De mate waarin mensen afstand willen houden slaat op drie factoren: de afstand d
 
 ### Beschrijving model
 
-![studentenstroom in de hal](doc/SkriensjotABM.png)
+![studentenstroom in de hal](doc/SkriensjotABM.png){ width=50% }
 
